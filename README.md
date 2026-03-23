@@ -1,7 +1,7 @@
 # Stolarches
 
 Katastroma's orderer. Implements the
-[diataxis](https://github.com/katastroma/diataxis) interface.
+[diataxis](https://github.com/katastroma/diataxis) client API.
 
 Given manifests, stolarches ensures they are in a safe apply order.
 
