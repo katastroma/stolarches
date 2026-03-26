@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.0.2 - 2026-03-26
+#### Bug Fixes
+- (**cd**) ignore generated output paths though - (080dca7) - Nathan Blair
+
+- - -
+
 ## 0.0.1 - 2026-03-26
 #### Bug Fixes
 - (**cd**) cog handles CD trigger - (03980b9) - Nathan Blair
