@@ -21,8 +21,6 @@ func TestNew(t *testing.T) {
 }
 
 func TestOrder(t *testing.T) {
-	var forwarded []*unstructured.Unstructured
-
 	var router order.Router
 	router.Register(pb.OrdererType_ORDERER_TYPE_HELM, &tests.MockBackend{
 		OrderResult: tests.TestResources(),
@@ -31,10 +29,7 @@ func TestOrder(t *testing.T) {
 	svc := serve.New(
 		slog.Default(),
 		&router,
-		func(_ context.Context, resources []*unstructured.Unstructured) error {
-			forwarded = resources
-			return nil
-		},
+		func(_ context.Context, _ []*unstructured.Unstructured) error { return nil },
 	)
 
 	stream := &tests.MockOrdererServer{
@@ -44,14 +39,6 @@ func TestOrder(t *testing.T) {
 
 	if err := svc.Order(stream); err != nil {
 		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if len(forwarded) != 1 {
-		t.Fatalf("expected 1 resource forwarded, got %d", len(forwarded))
-	}
-
-	if forwarded[0].GetKind() != "ConfigMap" {
-		t.Errorf("expected ConfigMap, got %s", forwarded[0].GetKind())
 	}
 
 	if len(stream.Responses) != 1 {

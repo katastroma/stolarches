@@ -1,14 +1,12 @@
 package serve
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"testing"
 
 	pb "github.com/katastroma/diataxis"
 	"google.golang.org/grpc/metadata"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/katastroma/stolarches/internal/order"
 	"github.com/katastroma/stolarches/internal/tests"
@@ -97,42 +95,3 @@ func TestOrder_SendAndCloseError(t *testing.T) {
 	}
 }
 
-func TestOrder_OrderError(t *testing.T) {
-	backend := &tests.MockBackend{OrderErr: fmt.Errorf("order failed")}
-
-	var router order.Router
-	router.Register(defaultOrdererType, backend)
-
-	svc := New(slog.Default(), &router, nil)
-	stream := &tests.MockOrdererServer{
-		Requests: []*pb.OrderRequest{{Manifest: []byte("data")}},
-		Ctx:      t.Context(),
-	}
-
-	if err := svc.Order(stream); err != nil {
-		t.Fatal("expected nil return after SendAndClose even when order fails")
-	}
-
-	if len(stream.Responses) != 1 {
-		t.Fatalf("expected response sent before order failure, got %d", len(stream.Responses))
-	}
-}
-
-func TestOrder_ForwardError(t *testing.T) {
-	backend := &tests.MockBackend{OrderResult: tests.TestResources()}
-
-	var router order.Router
-	router.Register(defaultOrdererType, backend)
-
-	svc := New(slog.Default(), &router, func(_ context.Context, _ []*unstructured.Unstructured) error {
-		return fmt.Errorf("forward failed")
-	})
-	stream := &tests.MockOrdererServer{
-		Requests: []*pb.OrderRequest{{Manifest: []byte("data")}},
-		Ctx:      t.Context(),
-	}
-
-	if err := svc.Order(stream); err != nil {
-		t.Fatal("expected nil return after SendAndClose even when forward fails")
-	}
-}

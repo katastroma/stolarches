@@ -10,6 +10,10 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+// const defaultOrdererType = pb.OrdererType_ORDERER_TYPE_CLI_UTILS
+
+const defaultOrdererType = pb.OrdererType_ORDERER_TYPE_HELM
+
 func fail(ctx context.Context, log *slog.Logger, msg string, err error) {
 	log.ErrorContext(ctx, msg, "error", err)
 }
@@ -44,23 +48,10 @@ func (s *Service) Order(stream pb.OrdererService_OrderServer) error {
 		return fmt.Errorf("sending response: %w", err)
 	}
 
-	log.DebugContext(ctx, "ordering manifests")
-	resources, err := backend.Order()
-	if err != nil {
-		fail(ctx, log, "ordering failed", err)
-		return nil
-	}
-	log.DebugContext(ctx, "manifests ordered", "count", len(resources))
-
-	log.DebugContext(ctx, "streaming to provisioner")
-	if err = s.streamFn(ctx, resources); err != nil {
-		fail(ctx, log, "streaming to provisioner failed", err)
-	}
+	go orderAndForward(ctx, log, backend, s.streamFn)
 
 	return nil
 }
-
-const defaultOrdererType = pb.OrdererType_ORDERER_TYPE_HELM
 
 func readOrdererType(ctx context.Context) pb.OrdererType {
 	md, ok := metadata.FromIncomingContext(ctx)
