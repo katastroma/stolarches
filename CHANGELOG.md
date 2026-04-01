@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.1.0 - 2026-04-01
+#### Features
+- initial release - (a90f471) - Nathan Blair
+#### Bug Fixes
+- decouple incoming signal from processing and forwarding - (7c6dbb4) - Nathan Blair
+#### Documentation
+- use org CONTRIBUTING.md - (e1154eb) - Nathan Blair
+
+- - -
+
 ## 0.0.2 - 2026-03-26
 #### Bug Fixes
 - (**cd**) ignore generated output paths though - (080dca7) - Nathan Blair
