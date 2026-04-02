@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.1.1 - 2026-04-02
+#### Bug Fixes
+- remove debug manifest logging - (518fd1c) - Nathan Blair
+
+- - -
+
 ## 0.1.0 - 2026-04-01
 #### Features
 - initial release - (a90f471) - Nathan Blair
