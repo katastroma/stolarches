@@ -19,9 +19,6 @@ func orderAndForward(ctx context.Context, log *slog.Logger, backend order.Backen
 		return
 	}
 	log.DebugContext(ctx, "manifests ordered", "count", len(resources))
-	for i, r := range resources {
-		log.DebugContext(ctx, "ordered resource", "index", i, "kind", r.GetKind(), "name", r.GetName())
-	}
 
 	log.DebugContext(ctx, "streaming to provisioner")
 	if err = streamFn(ctx, resources); err != nil {
