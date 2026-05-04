@@ -7,6 +7,7 @@ import (
 
 	pb "github.com/katastroma/diataxis"
 	"google.golang.org/grpc/metadata"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/katastroma/stolarches/internal/order"
 	"github.com/katastroma/stolarches/internal/tests"
@@ -68,7 +69,7 @@ func TestOrder_ReceiveError(t *testing.T) {
 
 	svc := New(slog.Default(), &router, nil)
 	stream := &tests.MockOrdererServer{
-		Requests: []*pb.OrderRequest{{Manifest: []byte("data")}},
+		Requests: []*pb.OrderRequest{{Data: []byte("data")}},
 		Ctx:      t.Context(),
 	}
 
@@ -85,13 +86,119 @@ func TestOrder_SendAndCloseError(t *testing.T) {
 
 	svc := New(slog.Default(), &router, nil)
 	stream := &tests.MockOrdererServer{
-		Requests: []*pb.OrderRequest{{Manifest: []byte("data")}},
+		Requests: []*pb.OrderRequest{{Data: []byte("data")}},
 		SendErr:  fmt.Errorf("send failed"),
 		Ctx:      t.Context(),
 	}
 
 	if err := svc.Order(stream); err == nil {
 		t.Fatal("expected error when SendAndClose fails")
+	}
+}
+
+func TestOrderStream(t *testing.T) {
+	backend := &tests.MockBackend{OrderResult: tests.TestResources()}
+
+	var router order.Router
+	router.Register(defaultOrdererType, backend)
+
+	svc := New(slog.Default(), &router, nil)
+	stream := &tests.MockOrdererStreamServer{
+		Requests: []*pb.OrderStreamRequest{{Data: []byte("data")}},
+		Ctx:      t.Context(),
+	}
+
+	if err := svc.OrderStream(stream); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(stream.Sent) != 1 {
+		t.Fatalf("expected 1 response, got %d", len(stream.Sent))
+	}
+}
+
+func TestOrderStream_BackendLookupError(t *testing.T) {
+	var router order.Router
+
+	svc := New(slog.Default(), &router, nil)
+	stream := &tests.MockOrdererStreamServer{
+		Ctx: t.Context(),
+	}
+
+	if err := svc.OrderStream(stream); err == nil {
+		t.Fatal("expected error when backend not registered")
+	}
+}
+
+func TestOrderStream_ReceiveError(t *testing.T) {
+	backend := &tests.MockBackend{ReceiveErr: fmt.Errorf("receive failed")}
+
+	var router order.Router
+	router.Register(defaultOrdererType, backend)
+
+	svc := New(slog.Default(), &router, nil)
+	stream := &tests.MockOrdererStreamServer{
+		Requests: []*pb.OrderStreamRequest{{Data: []byte("data")}},
+		Ctx:      t.Context(),
+	}
+
+	if err := svc.OrderStream(stream); err == nil {
+		t.Fatal("expected error when receive fails")
+	}
+}
+
+func TestOrderStream_OrderError(t *testing.T) {
+	backend := &tests.MockBackend{OrderErr: fmt.Errorf("order failed")}
+
+	var router order.Router
+	router.Register(defaultOrdererType, backend)
+
+	svc := New(slog.Default(), &router, nil)
+	stream := &tests.MockOrdererStreamServer{
+		Requests: []*pb.OrderStreamRequest{{Data: []byte("data")}},
+		Ctx:      t.Context(),
+	}
+
+	if err := svc.OrderStream(stream); err == nil {
+		t.Fatal("expected error when order fails")
+	}
+}
+
+func TestOrderStream_MarshalError(t *testing.T) {
+	bad := []*unstructured.Unstructured{{
+		Object: map[string]any{"kind": "Bad", "metadata": map[string]any{"name": make(chan int)}},
+	}}
+	backend := &tests.MockBackend{OrderResult: bad}
+
+	var router order.Router
+	router.Register(defaultOrdererType, backend)
+
+	svc := New(slog.Default(), &router, nil)
+	stream := &tests.MockOrdererStreamServer{
+		Requests: []*pb.OrderStreamRequest{{Data: []byte("data")}},
+		Ctx:      t.Context(),
+	}
+
+	if err := svc.OrderStream(stream); err == nil {
+		t.Fatal("expected error when marshal fails")
+	}
+}
+
+func TestOrderStream_SendError(t *testing.T) {
+	backend := &tests.MockBackend{OrderResult: tests.TestResources()}
+
+	var router order.Router
+	router.Register(defaultOrdererType, backend)
+
+	svc := New(slog.Default(), &router, nil)
+	stream := &tests.MockOrdererStreamServer{
+		Requests: []*pb.OrderStreamRequest{{Data: []byte("data")}},
+		SendErr:  fmt.Errorf("send failed"),
+		Ctx:      t.Context(),
+	}
+
+	if err := svc.OrderStream(stream); err == nil {
+		t.Fatal("expected error when send fails")
 	}
 }
 

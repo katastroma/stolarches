@@ -21,10 +21,10 @@ import (
 	"github.com/katastroma/stolarches/internal/config"
 	grpc_health "github.com/katastroma/stolarches/internal/health/grpc"
 	http_health "github.com/katastroma/stolarches/internal/health/http"
+	"github.com/katastroma/stolarches/internal/labeler"
 	"github.com/katastroma/stolarches/internal/order"
 	"github.com/katastroma/stolarches/internal/order/cliutils"
 	"github.com/katastroma/stolarches/internal/order/helm"
-	"github.com/katastroma/stolarches/internal/provisioner"
 	"github.com/katastroma/stolarches/internal/serve"
 )
 
@@ -40,24 +40,24 @@ func main() {
 	}
 	defer shutdown(mainCtx)
 
-	provisionerAddr, err := config.RequireEnv("PROVISIONER_ADDR")
+	labelerAddr, err := config.RequireEnv("LABELER_ADDR")
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(1)
 	}
 
-	provisionerConn, err := foundationclient.New(provisionerAddr, nil, nil)
+	labelerConn, err := foundationclient.New(labelerAddr, nil, nil)
 	if err != nil {
-		log.Error("provisioner connection failed", "error", err)
+		log.Error("labeler connection failed", "error", err)
 		os.Exit(1)
 	}
-	defer provisionerConn.Close()
+	defer labelerConn.Close()
 
 	var router order.Router
 	router.Register(pb.OrdererType_ORDERER_TYPE_HELM, helm.New())
 	router.Register(pb.OrdererType_ORDERER_TYPE_CLI_UTILS, cliutils.New())
 
-	streamFn := provisioner.NewStreamFunc(log, provisionerConn)
+	streamFn := labeler.NewStreamFunc(log, labelerConn)
 	service := serve.New(log, &router, streamFn)
 
 	mux := http.NewServeMux()

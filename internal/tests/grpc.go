@@ -31,7 +31,9 @@ type MockClientStream struct {
 	SendMsgErr error
 	// RecvMsgErr is returned by RecvMsg when set.
 	RecvMsgErr error
-	recvDone   bool
+	// Ctx is returned by Context.
+	Ctx      context.Context
+	recvDone bool
 }
 
 // SendMsg records a sent message or returns the configured error.
@@ -64,5 +66,5 @@ func (s *MockClientStream) Header() (metadata.MD, error) { return nil, nil }
 // Trailer returns empty metadata.
 func (s *MockClientStream) Trailer() metadata.MD { return nil }
 
-// Context returns a background context.
-func (s *MockClientStream) Context() context.Context { return context.Background() }
+// Context returns the configured context.
+func (s *MockClientStream) Context() context.Context { return s.Ctx }

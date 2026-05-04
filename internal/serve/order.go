@@ -53,6 +53,48 @@ func (s *Service) Order(stream pb.OrdererService_OrderServer) error {
 	return nil
 }
 
+// OrderStream receives manifest data over the bidi stream, orders the manifests,
+// and streams the ordered resources back one per message.
+func (s *Service) OrderStream(stream pb.OrdererService_OrderStreamServer) error {
+	ctx := stream.Context()
+	s.log.InfoContext(ctx, "order stream requested")
+
+	ordererType := readOrdererType(ctx)
+	log := s.log.With("orderer", ordererType.String())
+
+	backend, err := s.router.Lookup(ordererType)
+	if err != nil {
+		fail(ctx, log, "backend lookup failed", err)
+		return fmt.Errorf("backend lookup: %w", err)
+	}
+
+	if err = backend.Receive(&orderStreamReader{stream: stream}); err != nil {
+		fail(ctx, log, "receiving failed", err)
+		return fmt.Errorf("receiving: %w", err)
+	}
+
+	resources, err := backend.Order()
+	if err != nil {
+		fail(ctx, log, "ordering failed", err)
+		return fmt.Errorf("ordering: %w", err)
+	}
+
+	for _, obj := range resources {
+		var data []byte
+		data, err = obj.MarshalJSON()
+		if err != nil {
+			fail(ctx, log, "marshaling resource failed", err)
+			return fmt.Errorf("marshaling %s/%s: %w", obj.GetKind(), obj.GetName(), err)
+		}
+		if err = stream.Send(&pb.OrderStreamResponse{Manifest: data}); err != nil {
+			fail(ctx, log, "sending resource failed", err)
+			return fmt.Errorf("sending resource: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func readOrdererType(ctx context.Context) pb.OrdererType {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

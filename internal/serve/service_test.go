@@ -33,7 +33,7 @@ func TestOrder(t *testing.T) {
 	)
 
 	stream := &tests.MockOrdererServer{
-		Requests: []*pb.OrderRequest{{Manifest: []byte("data")}},
+		Requests: []*pb.OrderRequest{{Data: []byte("data")}},
 		Ctx:      t.Context(),
 	}
 

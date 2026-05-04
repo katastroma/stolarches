@@ -5,11 +5,11 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/katastroma/stolarches/internal/labeler"
 	"github.com/katastroma/stolarches/internal/order"
-	"github.com/katastroma/stolarches/internal/provisioner"
 )
 
-func orderAndForward(ctx context.Context, log *slog.Logger, backend order.Backend, streamFn provisioner.StreamFunc) {
+func orderAndForward(ctx context.Context, log *slog.Logger, backend order.Backend, streamFn labeler.StreamFunc) {
 	ctx = context.WithoutCancel(ctx)
 
 	log.DebugContext(ctx, "ordering manifests")
