@@ -2,6 +2,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.2.0 - 2026-05-04
+#### Features
+- implement bidi streaming - (3549eb6) - Nathan Blair
+#### Documentation
+- flesh out docs - (4e581e1) - Nathan Blair
+#### Miscellaneous Chores
+- more bidi streaming - (d2b1d70) - Nathan Blair
+
+- - -
+
 ## 0.1.1 - 2026-04-02
 #### Bug Fixes
 - remove debug manifest logging - (518fd1c) - Nathan Blair
